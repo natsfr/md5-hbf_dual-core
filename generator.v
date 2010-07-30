@@ -166,7 +166,7 @@ begin
 									state <= s10;
 								end
 						end
-					if (m_out_val_2)
+					else if (m_out_val_2)
 						begin
 `ifdef SIMULATION
 							$display("CORE2 - md5(%s) = %h", m_in_2, m_out_2);
@@ -187,7 +187,7 @@ begin
 									state <= s10;
 								end
 						end
-					if (md5_ready_1)
+					else if(md5_ready_1)
 						begin
 							m_in_w <= 8'd64;
 							m_in_valid <= 1;
