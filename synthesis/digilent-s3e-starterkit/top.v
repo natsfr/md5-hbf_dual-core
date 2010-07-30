@@ -1,4 +1,4 @@
-`define CLOCK_FREQUENCY 60000000
+`define CLOCK_FREQUENCY 50000000
 
 module top(input rewind_usart, output reset_led, input clock, input reset, output led, output led2, output led3, input UART_TXD, output UART_RXD);
 
