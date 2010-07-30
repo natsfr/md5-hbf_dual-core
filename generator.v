@@ -12,13 +12,18 @@ reg	[3:0] state = 4'b0;
 bram bram1 (clk, we, a, di, do);
 
 reg	[0:127] m_in = 128'd0;
+reg	[0:127] m_in_2 = 128'd0;
 reg	[0:127] m_in_buff = 128'd0;
 reg	[0:7]	m_in_w = 8'd0;
+reg	[0:7]	m_in_w_2 = 8'd0;
 reg	m_in_valid = 0;
+reg	m_in_valid_2 = 0;
 
 wire	[0:127] m_out;
-wire	m_out_val;
-wire	md5_ready;
+wire	[0:127] m_out_2;
+
+wire	m_out_val, m_out_val_1, m_out_val_2;
+wire	md5_ready, md5_ready_1, md5_ready_2;
 
 reg	led_reg = 0;
 
@@ -26,7 +31,7 @@ reg	[7:0] bytetosend;
 wire	sent;
 reg	send;
 
-reg	[7:0] tmp;
+reg	[7:0] tmp_val_1;
 reg	[7:0] tmp2;
 
 pancham md5(
@@ -36,15 +41,25 @@ pancham md5(
 	.msg_in_width(m_in_w),
 	.msg_in_valid(m_in_valid),
 	.msg_output(m_out),
-	.msg_out_valid(m_out_val),
-	.ready(md5_ready)
+	.msg_out_valid(m_out_val_1),
+	.ready(md5_ready_1)
+	);
+
+pancham md5_2(
+	.clk(clk),
+	.reset(reset),
+	.msg_in(m_in_2),
+	.msg_in_width(m_in_w_2),
+	.msg_in_valid(m_in_valid_2),
+	.msg_output(m_out_2),
+	.msg_out_valid(m_out_val_2),
+	.ready(md5_ready_2)
 	);
 	
 usart #(.fsm_clk_freq(clock_freq) ) usart1 (clk, reset, tx_led, bytetosend, send, sent, tx); 
 
 
 assign led = led_reg;
-
 
 initial begin
 	state = 0;
@@ -78,6 +93,9 @@ begin
 			m_in_valid <= 0;
 			m_in_w <= 8'd64;
 			m_in_buff <= 128'd0;
+			
+			m_in_valid_2 <= 0;
+			m_in_w_2 <= 8'd64;
 		end
 	else
 		begin
@@ -127,11 +145,11 @@ begin
 					j <= j + 1;
 				end
 			s10:	begin
-					if (m_out_val)
+					if (m_out_val_1)
 						begin
 `ifdef SIMULATION
-							$display("md5(%s) = %h", m_in, m_out);
-							if (m_out == 128'h82cf9fa647dd1b3fbd9de71bbfb83fb2)
+							$display("CORE1 - md5(%s) = %h", m_in, m_out);
+							if (m_out == 128'h9ffaf8351cd571fabeb210c0170608ef)
 `else
 							if (m_out == 128'haef656fe0f5a36d58ae1029630ba25e2)
 `endif
@@ -139,29 +157,55 @@ begin
 									state <= found;
 									led_reg <= 1;
 `ifdef SIMULATION
-									$display("MD5 HASH FOUND");
+									$display("CORE1 - MD5 HASH FOUND");
 `endif
-									tmp <= m_in[120:127];
+									tmp_val_1 <= m_in[120:127];
 								end
 							else
 								begin
 									state <= s10;
 								end
 						end
+					if (m_out_val_2)
+						begin
+`ifdef SIMULATION
+							$display("CORE2 - md5(%s) = %h", m_in_2, m_out_2);
+							if (m_out_2 == 128'h9ffaf8351cd571fabeb210c0170608ef)
+`else
+							if (m_out_2 == 128'haef656fe0f5a36d58ae1029630ba25e2)
+`endif
+								begin
+									state <= found;
+									led_reg <= 1;
+`ifdef SIMULATION
+									$display("CORE2 - MD5 HASH FOUND");
+`endif
+									tmp_val_1 <= m_in[120:127];
+								end
+							else
+								begin
+									state <= s10;
+								end
+						end
+					if (md5_ready_1)
+						begin
+							m_in_w <= 8'd64;
+							m_in_valid <= 1;
+							m_in <= m_in_buff;
+							state <= s1;
+							a <= { 5'b0, j[5:0] };
+						end
+					else if(md5_ready_2)
+						begin
+							m_in_w_2 <= 8'd64;
+							m_in_valid_2 <= 1;
+							m_in_2 <= m_in_buff;
+							state <= s1;
+							a <= { 5'b0, j[5:0] };
+						end
 					else
 						begin
-						if (md5_ready)
-							begin
-								m_in_w <= 8'd64;
-								m_in_valid <= 1;
-								m_in <= m_in_buff;
-								state <= s1;
-								a <= { 5'b0, j[5:0] };
-							end
-						else
-							begin
-								state <= s10;
-							end
+							state <= s10;
 						end
 				end
 			found:	begin
@@ -188,9 +232,9 @@ reg	[0:127] cleartext;
 				begin
 					if (show_result_count == 4'd0)
 					begin
-						tmp2 <= tmp;
-						cleartext <= { 56'b0, tmp, m_in[64:119] }; 
-						bytetosend <= tmp;
+						tmp2 <= tmp_val_1;
+						cleartext <= { 56'b0, tmp_val_1, m_in[64:119] }; 
+						bytetosend <= tmp_val_1;
 					end
 					else
 					begin
@@ -201,8 +245,8 @@ reg	[0:127] cleartext;
 					show_result_count <= show_result_count + 1;
 `ifdef SIMULATION
 `ifdef MAXDEBUG
-					$display("tmp = %h, m_in = %h, bytetosend = %h, send = %b", tmp, m_in[64:127], bytetosend, send);
-					$display("tmp2 = %h, cleartext = %h, bytetosend = %h, send = %b", tmp, cleartext[64:127], bytetosend, send);
+					$display("tmp = %h, m_in = %h, bytetosend = %h, send = %b", tmp_val_1, m_in[64:127], bytetosend, send);
+					$display("tmp2 = %h, cleartext = %h, bytetosend = %h, send = %b", tmp_val_1, cleartext[64:127], bytetosend, send);
 `endif
 `endif
 				end 	
