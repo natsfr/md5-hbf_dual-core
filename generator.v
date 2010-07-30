@@ -31,10 +31,6 @@ reg	[7:0] bytetosend;
 wire	sent;
 reg	send;
 
-reg	[0:127] cur_txt_1 = 128'd0;
-reg	[0:127] cur_txt_2 = 128'd0;
-reg	[0:127] tmp_backup = 128'd0;
-
 reg	[7:0] tmp_val_1;
 reg	[7:0] tmp2;
 
@@ -152,7 +148,7 @@ begin
 					if (m_out_val_1)
 						begin
 `ifdef SIMULATION
-							$display("CORE1 - md5(%s) = %h", cur_txt_1, m_out);
+							$display("CORE1 - md5(%s) = %h", m_in_1, m_out);
 							if (m_out == 128'h9ffaf8351cd571fabeb210c0170608ef)
 `else
 							if (m_out == 128'haef656fe0f5a36d58ae1029630ba25e2)
@@ -163,8 +159,7 @@ begin
 `ifdef SIMULATION
 									$display("CORE1 - MD5 HASH FOUND");
 `endif
-									tmp_val_1 <= cur_txt_1[120:127];
-									tmp_backup <= cur_txt_1;
+									tmp_val_1 <= m_in_1[120:127];
 								end
 							else
 								begin
@@ -174,7 +169,7 @@ begin
 					else if (m_out_val_2)
 						begin
 `ifdef SIMULATION
-							$display("CORE2 - md5(%s) = %h", cur_txt_2, m_out_2);
+							$display("CORE2 - md5(%s) = %h", m_in_2, m_out_2);
 							if (m_out_2 == 128'h9ffaf8351cd571fabeb210c0170608ef)
 `else
 							if (m_out_2 == 128'haef656fe0f5a36d58ae1029630ba25e2)
@@ -185,8 +180,7 @@ begin
 `ifdef SIMULATION
 									$display("CORE2 - MD5 HASH FOUND");
 `endif
-									tmp_val_1 <= cur_txt_2[120:127];
-									tmp_backup <= cur_txt_2;
+									tmp_val_1 <= m_in_2[120:127];
 								end
 							else
 								begin
@@ -198,7 +192,6 @@ begin
 							m_in_w <= 8'd64;
 							m_in_valid <= 1;
 							m_in <= m_in_buff;
-							cur_txt_1 <= m_in_buff;
 							state <= s1;
 							a <= { 5'b0, j[5:0] };
 						end
@@ -207,7 +200,6 @@ begin
 							m_in_w_2 <= 8'd64;
 							m_in_valid_2 <= 1;
 							m_in_2 <= m_in_buff;
-							cur_txt_2 <= m_in_buff;
 							state <= s1;
 							a <= { 5'b0, j[5:0] };
 						end
@@ -241,7 +233,7 @@ reg	[0:127] cleartext;
 					if (show_result_count == 4'd0)
 					begin
 						tmp2 <= tmp_val_1;
-						cleartext <= { 56'b0, tmp_val_1, tmp_backup[64:119] }; 
+						cleartext <= { 56'b0, tmp_val_1, m_in[64:119] }; 
 						bytetosend <= tmp_val_1;
 					end
 					else
@@ -253,7 +245,7 @@ reg	[0:127] cleartext;
 					show_result_count <= show_result_count + 1;
 `ifdef SIMULATION
 `ifdef MAXDEBUG
-					$display("tmp = %h, m_in = %h, bytetosend = %h, send = %b", tmp_val_1, tmp_backup[64:127], bytetosend, send);
+					$display("tmp = %h, m_in = %h, bytetosend = %h, send = %b", tmp_val_1, m_in[64:127], bytetosend, send);
 					$display("tmp2 = %h, cleartext = %h, bytetosend = %h, send = %b", tmp_val_1, cleartext[64:127], bytetosend, send);
 `endif
 `endif
