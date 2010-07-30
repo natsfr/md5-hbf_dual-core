@@ -149,7 +149,7 @@ begin
 							$display("CORE2 - md5(%s) = %h", m_in_2, m_out_2);
 							if (m_out_2 == 128'h694eb0dbf2862a890290ad783f954bf3)
 `else
-							if (m_out_2 == 128'he5021844a2e797612077406d699e5934)
+							if (m_out_2 == 128'he4cec1b40fa014fe06f207755a9c2087)
 `endif
 								begin
 									state <= found;
@@ -180,7 +180,7 @@ begin
 							$display("CORE1 - md5(%s) = %h", m_in, m_out);
 							if (m_out == 128'h694eb0dbf2862a890290ad783f954bf3)
 `else
-							if (m_out == 128'he5021844a2e797612077406d699e5934)
+							if (m_out == 128'he4cec1b40fa014fe06f207755a9c2087)
 `endif
 								begin
 									state <= found;
