@@ -104,6 +104,7 @@ begin
 					a <= { 5'b0, j[11:6] };
 					state <= s2;
 					m_in_valid <= 0;
+					m_in_valid_2 <= 0;
 				end
 			s2:	begin
 					m_in_buff[64:71] <= do;
@@ -148,7 +149,7 @@ begin
 					if (m_out_val_1)
 						begin
 `ifdef SIMULATION
-							$display("CORE1 - md5(%s) = %h", m_in_1, m_out);
+							$display("CORE1 - md5(%s) = %h", m_in, m_out);
 							if (m_out == 128'h9ffaf8351cd571fabeb210c0170608ef)
 `else
 							if (m_out == 128'haef656fe0f5a36d58ae1029630ba25e2)
@@ -159,7 +160,7 @@ begin
 `ifdef SIMULATION
 									$display("CORE1 - MD5 HASH FOUND");
 `endif
-									tmp_val_1 <= m_in_1[120:127];
+									tmp_val_1 <= m_in[120:127];
 								end
 							else
 								begin
