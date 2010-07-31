@@ -2,17 +2,21 @@ md5 hardware bruteforcer IP core
 
 (c) Yann Sionneau <yann@minet.net>
 (c) Guillaume Rose <mrfreeze@minet.net>
+(c) nats` <nats.fr@gmail.com>
 
 we use the pancham MD5 IP core made by Swapnajit Mittra <http://www.angelfire.com/ca/verilog>
 we plan on changing the MD5 IP core, since this one limits the design speed to 38 MHz which is slow.
 however a md5 hash is computed each 68 clock rising edge, which is pretty fast (in particular compared to implentations in software using modern CPU).
 
-Update (07-2010): The design can run at 50MHz on a spartan 3E 500K gate.
+Supported Boards:
+ - Digilent: Spartan 3E Starter Kit (500K gates) => Run without any problems at 50MHz !
+ - Avnet: Spartan 3A Evaluation Board (400K gates) => Seems to run correctly at 46MHz !
+ - Xilinx: Spartan 3AN Starter Kit (700K gates)
+ - Digilent: Spartan 3E Basys (250K gates) => Only mono-core
+ - Digilent: XUPV2P Virtex 2-Pro XCV2P30 => Draft not working very very buggy !
 
 Synthesis : 
 
-It has been synthetized successfully for Spartan-3A XC3S400A and on Spartan-3AN XC3S700AN
-on the AVNET Spartan-3A fpga dev board and the Xilinx Spartan-3AN Starter Kit respectively.
 usart output works and shows the cleartext password when bruteforcing reveals a md5 hash collision.
 
 HOW-TO Synthetize ?
