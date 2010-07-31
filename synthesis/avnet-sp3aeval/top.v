@@ -1,4 +1,4 @@
-`define CLOCK_FREQUENCY 32000000
+`define CLOCK_FREQUENCY 46000000
 
 module top(input rewind_usart, output reset_led, input clock, input reset, output led, output led2, output led3, input UART_TXD, output UART_RXD);
 
@@ -8,6 +8,7 @@ reg rewind_usart_sync;
 wire sys_clk;
 wire sys_clk_dcm;
 
+wire clk_fb;
 wire clk_fb_buf;
 
 always @(posedge sys_clk)
@@ -18,12 +19,12 @@ end
 
 generator #(.clock_freq(`CLOCK_FREQUENCY) ) g1 (sys_clk, reset_sync, led, led3, UART_RXD, rewind_usart_sync);
 
-DCM #(
+DCM_SP #(
 //	.CLKDV_DIVIDE(2),
-//	.CLKFX_DIVIDE(2),
-	.CLKFX_MULTIPLY(2),
+	.CLKFX_DIVIDE(8),
+	.CLKFX_MULTIPLY(23),
 	.CLKIN_DIVIDE_BY_2("FALSE"),
-	.CLKIN_PERIOD(63.0),
+	.CLKIN_PERIOD(62.5),
 	.CLKOUT_PHASE_SHIFT("NONE"),
 	.CLK_FEEDBACK("1X"),
 	.DESKEW_ADJUST("SYSTEM_SYNCHRONOUS"),
@@ -31,16 +32,17 @@ DCM #(
 	.DLL_FREQUENCY_MODE("LOW"),
 	.DUTY_CYCLE_CORRECTION("TRUE"),
 	.PHASE_SHIFT(0),
-	.STARTUP_WAIT("FALSE")
+	.STARTUP_WAIT("TRUE"),
+        .FACTORY_JF(16'hC080)
 ) clkgen (
-	.CLK0(),
+	.CLK0(clk_fb),
 	.CLK90(),
 	.CLK180(),
 	.CLK270(),
-	.CLK2X(sys_clk_dcm),
+	.CLK2X(),
 	.CLK2X180(),
 	.CLKDV(),
-	.CLKFX(),
+	.CLKFX(sys_clk_dcm),
 	.CLKFX180(),
 	.LOCKED(),
 	.CLKFB(clk_fb_buf),
@@ -55,7 +57,7 @@ BUFG b1(
 );
 
 BUFG b_fb(
-	.I(sys_clk_dcm),
+	.I(clk_fb),
 	.O(clk_fb_buf)
 );
 

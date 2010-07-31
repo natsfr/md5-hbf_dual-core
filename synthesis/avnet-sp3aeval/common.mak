@@ -15,7 +15,7 @@ build/top-routed.ncd: build/top.ncd
 	cd build && par -ol high -xe n -w top.ncd top-routed.ncd
 
 build/top.bit: build/top-routed.ncd
-	cd build && bitgen -w top-routed.ncd top.bit
+	cd build && bitgen -g LCK_cycle:3 -w top-routed.ncd top.bit
 
 build/top-routed.xdl: build/top-routed.ncd
 	cd build && xdl -ncd2xdl top-routed.ncd top-routed.xdl
