@@ -10,7 +10,7 @@ however a md5 hash is computed each 68 clock rising edge, which is pretty fast (
 
 Supported Boards:
  - Digilent: Spartan 3E Starter Kit (500K gates) => Run without any problems at 50MHz !
- - Avnet: Spartan 3A Evaluation Board (400K gates)
+ - Avnet: Spartan 3A Evaluation Board (400K gates) => Seems to run correctly at 46MHz !
  - Xilinx: Spartan 3AN Starter Kit (700K gates)
  - Digilent: Spartan 3E Basys (250K gates) => Only mono-core
  - Digilent: XUPV2P Virtex 2-Pro XCV2P30 => Draft not working very very buggy !
