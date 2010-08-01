@@ -13,17 +13,25 @@ bram bram1 (clk, we, a, di, do);
 
 reg	[0:127] m_in = 128'd0;
 reg	[0:127] m_in_2 = 128'd0;
+reg	[0:127] m_in_3 = 128'd0;
+reg	[0:127] m_in_4 = 128'd0;
 reg	[0:127] m_in_buff = 128'd0;
 reg	[0:7]	m_in_w = 8'd0;
 reg	[0:7]	m_in_w_2 = 8'd0;
+reg	[0:7]	m_in_w_3 = 8'd0;
+reg	[0:7]	m_in_w_4 = 8'd0;
 reg	m_in_valid = 0;
 reg	m_in_valid_2 = 0;
+reg	m_in_valid_3 = 0;
+reg	m_in_valid_4 = 0;
 
 wire	[0:127] m_out;
 wire	[0:127] m_out_2;
+wire	[0:127] m_out_3;
+wire	[0:127] m_out_4;
 
-wire	m_out_val, m_out_val_1, m_out_val_2;
-wire	md5_ready, md5_ready_1, md5_ready_2;
+wire	m_out_val_1, m_out_val_2, m_out_val_3, m_out_val_4;
+wire	md5_ready_1, md5_ready_2, md5_ready_3, md5_ready_4;
 
 reg	led_reg = 0;
 
@@ -31,6 +39,7 @@ reg	[7:0] bytetosend;
 wire	sent;
 reg	send;
 
+reg	[0:127] m_result = 128'd0;
 reg	[7:0] tmp_val_1;
 reg	[7:0] tmp2;
 
@@ -54,6 +63,28 @@ pancham md5_2(
 	.msg_output(m_out_2),
 	.msg_out_valid(m_out_val_2),
 	.ready(md5_ready_2)
+	);
+	
+pancham md5_3(
+	.clk(clk),
+	.reset(reset),
+	.msg_in(m_in_3),
+	.msg_in_width(m_in_w_3),
+	.msg_in_valid(m_in_valid_3),
+	.msg_output(m_out_3),
+	.msg_out_valid(m_out_val_3),
+	.ready(md5_ready_3)
+	);
+
+pancham md5_4(
+	.clk(clk),
+	.reset(reset),
+	.msg_in(m_in_4),
+	.msg_in_width(m_in_w_4),
+	.msg_in_valid(m_in_valid_4),
+	.msg_output(m_out_4),
+	.msg_out_valid(m_out_val_4),
+	.ready(md5_ready_4)
 	);
 	
 usart #(.fsm_clk_freq(clock_freq) ) usart1 (clk, reset, tx_led, bytetosend, send, sent, tx); 
@@ -87,7 +118,6 @@ begin
 	if (reset)
 		begin
 			state <= s1;
-			led_reg <= 0;
 			a <= 11'b0;
 			j <= 48'b0;
 			m_in_valid <= 0;
@@ -96,6 +126,12 @@ begin
 			
 			m_in_valid_2 <= 0;
 			m_in_w_2 <= 8'd64;
+			
+			m_in_valid_3 <= 0;
+			m_in_w_3 <= 8'd64;
+			
+			m_in_valid_4 <= 0;
+			m_in_w_4 <= 8'd64;
 		end
 	else
 		begin
@@ -105,6 +141,8 @@ begin
 					state <= s2;
 					m_in_valid <= 0;
 					m_in_valid_2 <= 0;
+					m_in_valid_3 <= 0;
+					m_in_valid_4 <= 0;
 				end
 			s2:	begin
 					m_in_buff[64:71] <= do;
@@ -143,59 +181,10 @@ begin
 			s9:	begin
 					m_in_buff[120:127] <= do;
 					j <= j + 1;
-					if (m_out_val_2)
-						begin
-`ifdef SIMULATION
-							$display("CORE2 - md5(%s) = %h", m_in_2, m_out_2);
-							if (m_out_2 == 128'h694eb0dbf2862a890290ad783f954bf3)
-`else
-							if (m_out_2 == 128'he4cec1b40fa014fe06f207755a9c2087)
-`endif
-								begin
-									state <= found;
-									led_reg <= 1;
-`ifdef SIMULATION
-									$display("CORE2 - MD5 HASH FOUND");
-`endif
-									tmp_val_1 <= m_in_2[120:127];
-									m_in <= m_in_2;
-								end
-							else
-								begin
-									state <= s10;
-								end
-						end
-                                                else
-                                                begin
-                                                      state <= s10;
-                                                end
-
-
-
+                                      	state <= s10;
 				end
 			s10:	begin
-					if (m_out_val_1)
-						begin
-`ifdef SIMULATION
-							$display("CORE1 - md5(%s) = %h", m_in, m_out);
-							if (m_out == 128'h694eb0dbf2862a890290ad783f954bf3)
-`else
-							if (m_out == 128'he4cec1b40fa014fe06f207755a9c2087)
-`endif
-								begin
-									state <= found;
-									led_reg <= 1;
-`ifdef SIMULATION
-									$display("CORE1 - MD5 HASH FOUND");
-`endif
-									tmp_val_1 <= m_in[120:127];
-								end
-							else
-								begin
-									state <= s10;
-								end
-						end
-					else if(md5_ready_1)
+					if(md5_ready_1)
 						begin
 							m_in_w <= 8'd64;
 							m_in_valid <= 1;
@@ -211,6 +200,22 @@ begin
 							state <= s1;
 							a <= { 5'b0, j[5:0] };
 						end
+					else if(md5_ready_3)
+						begin
+							m_in_w_3 <= 8'd64;
+							m_in_valid_3 <= 1;
+							m_in_3 <= m_in_buff;
+							state <= s1;
+							a <= { 5'b0, j[5:0] };
+						end
+					else if(md5_ready_4)
+						begin
+							m_in_w_4 <= 8'd64;
+							m_in_valid_4 <= 1;
+							m_in_4 <= m_in_buff;
+							state <= s1;
+							a <= { 5'b0, j[5:0] };
+						end
 					else
 						begin
 							state <= s10;
@@ -222,6 +227,92 @@ begin
 			endcase
 		end
 end
+
+	always @(posedge clk)
+	begin
+		if(state != found) begin
+			if (m_out_val_1)
+			begin
+	`ifdef SIMULATION
+				$display("CORE1 - md5(%s) = %h", m_in, m_out);
+				if (m_out == 128'h0dcca3fa1b2fc28fc4b95fa41f258378)
+	`else
+				if (m_out == 128'he4cec1b40fa014fe06f207755a9c2087)
+	`endif
+					begin
+						state <= found;
+						led_reg <= 1;
+	`ifdef SIMULATION
+						$display("CORE1 - MD5 HASH FOUND");
+	`endif
+						tmp_val_1 <= m_in[120:127];
+						m_result <= m_in;
+					end else begin
+						led_reg <= 0;
+					end
+			end
+			else if (m_out_val_2)
+			begin
+	`ifdef SIMULATION
+				$display("CORE2 - md5(%s) = %h", m_in_2, m_out_2);
+				if (m_out_2 == 128'h0dcca3fa1b2fc28fc4b95fa41f258378)
+	`else
+				if (m_out_2 == 128'he4cec1b40fa014fe06f207755a9c2087)
+	`endif
+					begin
+						state <= found;
+						led_reg <= 1;
+	`ifdef SIMULATION
+						$display("CORE2 - MD5 HASH FOUND");
+	`endif
+						tmp_val_1 <= m_in_2[120:127];
+						m_result <= m_in_2;
+					end else begin
+						led_reg <= 0;
+					end
+			end
+			else if (m_out_val_3)
+			begin
+	`ifdef SIMULATION
+				$display("CORE3 - md5(%s) = %h", m_in_3, m_out_3);
+				if (m_out_3 == 128'h0dcca3fa1b2fc28fc4b95fa41f258378)
+	`else
+				if (m_out_3 == 128'he4cec1b40fa014fe06f207755a9c2087)
+	`endif
+					begin
+						state <= found;
+						led_reg <= 1;
+	`ifdef SIMULATION
+						$display("CORE3 - MD5 HASH FOUND");
+	`endif
+						tmp_val_1 <= m_in_3[120:127];
+						m_result <= m_in_3;
+					end else begin
+						led_reg <= 0;
+					end
+			end
+			else if (m_out_val_4)
+			begin
+	`ifdef SIMULATION
+				$display("CORE4 - md5(%s) = %h", m_in_4, m_out_4);
+				if (m_out_4 == 128'h0dcca3fa1b2fc28fc4b95fa41f258378)
+	`else
+				if (m_out_4 == 128'he4cec1b40fa014fe06f207755a9c2087)
+	`endif
+					begin
+						state <= found;
+						led_reg <= 1;
+	`ifdef SIMULATION
+						$display("CORE4 - MD5 HASH FOUND");
+	`endif
+						tmp_val_1 <= m_in_4[120:127];
+						m_result <= m_in_4;
+					end else begin
+						led_reg <= 0;
+					end
+			end
+		end
+	end
 
 wire 	result_displayed;
 reg	[3:0] show_result_count = 4'b0;
@@ -241,7 +332,7 @@ reg	[0:127] cleartext;
 					if (show_result_count == 4'd0)
 					begin
 						tmp2 <= tmp_val_1;
-						cleartext <= { 56'b0, tmp_val_1, m_in[64:119] }; 
+						cleartext <= { 56'b0, tmp_val_1, m_result[64:119] }; 
 						bytetosend <= tmp_val_1;
 					end
 					else
@@ -253,7 +344,7 @@ reg	[0:127] cleartext;
 					show_result_count <= show_result_count + 1;
 `ifdef SIMULATION
 `ifdef MAXDEBUG
-					$display("tmp = %h, m_in = %h, bytetosend = %h, send = %b", tmp_val_1, m_in[64:127], bytetosend, send);
+					$display("tmp = %h, m_in = %h, bytetosend = %h, send = %b", tmp_val_1, m_result[64:127], bytetosend, send);
 					$display("tmp2 = %h, cleartext = %h, bytetosend = %h, send = %b", tmp_val_1, cleartext[64:127], bytetosend, send);
 `endif
 `endif
